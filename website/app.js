@@ -1,86 +1,80 @@
 /* Global Variables */
 const baseURL = 'http://api.openweathermap.org/data/2.5/weather?zip=';
 const apiKey = "&appid=4052993d38986305af6be4a3c51fb607&units=imperial";
+const zipInput = document.querySelector('#zip');
+const userInput = document.getElementsByClassName('myInput');
 const generateButton = document.getElementById('generate');
-
-// event listener for the generate button with a callback function
-generateButton.addEventListener('click', performAction);
+const entry = document.querySelector('.entry');
 
 // Create a new date instance dynamically with JS
 let d = new Date();
-let newDate = d.getMonth()+'.'+ d.getDate()+'.'+ d.getFullYear();
-
-// callback function to be executed when generate button is clicked 
-function performAction(e) {
-
-	let content = document.getElementById('feelings').value;
-	let enteredZip = document.getElementById('zip').value;
-
-	// calling the async GET request function
-	getWeatherData(baseURL, enteredZip, apiKey)
-
-	// chaining a Promise that makes a POST request to add the API data and data entred by user to the app
-		.then(function (data) {
-			console.log(data);
-			postData( '/addData', {temp: data.main.temp, date: newDate, userResponse: content} );
-		})
-		// chaining another Promise that updates the UI dynamically
-		.then(function () {
-				updateUI()
-		});
-};
+let newDate = d.getMonth() + '-' + d.getDate() + '-' + d.getFullYear();
 
 // async function to make a GET request to the OpenWeatherMap API
-const getWeatherData = async (baseURL, enteredZip, apiKey) => {
-
-	const res = await fetch(baseURL + enteredZip + apiKey);
+const GetOpenWeatherMap = async (baseURL, zip, key) => {
+	const res = await fetch(baseURL + zip + key)
 	try {
-
-		const data = await res.json()
+		const data = await res.json();
 		console.log(data);
 		return data;
 	} catch (error) {
-
 		console.log("error", error);
 	}
 }
 
 // async function to make the POST request
-const postData = async(url = '', data = {}) => {
-	console.log(data);
+const postData = async (url = '', data = {}) => {
 	const response = await fetch(url, {
-		method: 'POST', // *GET, POST, PUT, DELETE, etc.
-		credentials: 'same-origin', // include, *same-origin, omit
+		method: 'POST',
+		credentials: 'same-origin',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify(data), // body data type must match "Content-Type" header
+		body: JSON.stringify(data),
 	});
-
 	try {
 		const newData = await response.json();
-		console.log(newData);
 		return newData;
 	} catch (error) {
 		console.log("error", error);
-		// appropriately handle the error
 	}
-}
+};
 
-// async function that update the UI
+// async function to GET Project Data and update the UI
 const updateUI = async () => {
+	entry.style.display = 'block';
 	const request = await fetch('/allData');
 	try {
-		const data = await request.json()
-		document.getElementById('temp').innerHTML = data.temperature;
+		// Transform into JSON
+		const data = await request.json();
+		// Write updated data to DOM elements
+		document.getElementById('temp').innerHTML = Math.round(data.temperature) + ' degrees';
+		document.getElementById('city').innerHTML = data.cityName;
+		document.getElementById('country').innerHTML = data.zipCountry;
 		document.getElementById('date').innerHTML = data.date;
-		document.getElementById('content').innerHTML = data.userResponse;
-		console.log(data);
+		if (userInput[0].value) {
+			document.getElementById('content').innerHTML = `You feel: ${data.userResponse}`;
+		}
 	} catch (error) {
 		console.log("error" + error);
 	}
 }
-  
 
+// callback function to be executed when generate button is clicked
+const performAction = () => {
+	const enteredZip = zipInput.value;
+	const userFeelings = userInput[0].value;
+	// calling the async GET request function
+	GetOpenWeatherMap(baseURL, enteredZip, apiKey)
+		// chaining a Promise that makes a POST request to add the API data and data entred by user to the app
+		.then((data) => {
+			postData('/addData', { temperature: data.main.temp, cityName: data.name, zipCountry: data.sys.country, date: newDate, userResponse: userFeelings })
+		})
+		// chaining another Promise that updates the UI dynamically
+		.then(() => {
+			updateUI();
+		})
+}
 
-
+// event listener for the generate button with a callback function
+generateButton.addEventListener('click', performAction);
