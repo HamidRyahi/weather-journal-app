@@ -42,7 +42,7 @@ body {
   margin-bottom: 100px;
 }
 .zip {
-  margin-bottom: 20px;
+  margin-bottom: 35px;
 }
 label {
   display: block;
@@ -76,7 +76,7 @@ button {
   display: block;
 }
 #zip,
-#feelings,
+/* #feelings, */
 #generate {
   margin: auto;
   width: fit-content;
@@ -109,4 +109,15 @@ label {
 #city,
 #country {
   display: inline;
+}
+@media (max-width: 400px) {
+  .headline {
+    font-size: 40px;
+  }
+  label {
+    font-size: 18px;
+  }
+  input {
+    font-size: 16px;
+  }
 }
